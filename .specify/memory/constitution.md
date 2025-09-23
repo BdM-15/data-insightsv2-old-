@@ -30,19 +30,46 @@ Provenance on every computed metric and narrative. Explicit, logged API calls wi
 
 Streamlit multipage app (filters, insights, relationships, export). Use chat elements for AI-assisted drafting. Dashboard performance requirement: <5s per filter. Export capabilities for Markdown/Docx with sources and footnotes.
 
+### Visualization & Chart Types
+
+Standardize visualizations to ensure consistency and speed while keeping scope lean. Split into core vs optional so teams can ship iteratively.
+
+Core (ship first):
+
+- Bar/Column: top agencies, NAICS/PSC, contractors by count/obligation
+- Line/Area: quarterly trends, simple forecasts (24–36 months)
+- Tables with cross-filtering: expiring recompetes, opportunity pipelines
+
+Advanced (optional, behind feature flag VIS_ADVANCED_CHARTS):
+
+- Scatter/Bubble: obligation vs award_count, competition vs obligation (size by avg value)
+- Treemap: competitive landscape (parent → recipient → sub-agency)
+- Heatmaps/Choropleth: competitor–agency, NAICS–agency density, geography
+- Timeline: expiring contracts by timeframe (0–6, 6–12, 12–24 months)
+- Network graphs: prime–sub relationships, IDV–task order linkages
+- Sankey diagrams: contract flow (agency → prime → sub), funding sources, award lifecycle transitions
+
+All charts should support cross-filtering and export as PNG/PDF. Use Plotly where interactive. Target redraws p95 <2s; degrade gracefully on large selections (sampling, aggregation).
+
 ### Backend & Database
 
-PostgreSQL with pgvector. Tables for awards, subawards, recipients, entities, relationships, embeddings, and summaries. Indexes for common filters (date/agency/NAICS/PSC/recipient) + vector indexes for semantic search.
+PostgreSQL with pgvector. Logical tables for awards, subawards, recipients, entities, relationships, embeddings, and summaries. Index for common filters (date/agency/NAICS/PSC/recipient) + vector indexes for semantic search.
 
-**Required Tables**: `s3_processed.usaspending_prime_awards_dedup`, `s3_processed.usaspending_subawards_enriched`, `mv_expiring_contracts` (materialized view)
+Baseline logical tables (map via views/aliases to your schema):
 
-**Performance Standards**: Dashboard queries <5s, semantic vector operations <2s, materialized view refresh <30min
+- `prime_awards`
+- `subawards_enriched`
+- `mv_expiring_contracts`
+
+Note: If using existing schemas (e.g., `s3_processed.usaspending_prime_awards_dedup`), provide SQL views to expose the above logical names to the app to avoid hard coupling to one warehouse layout.
+
+Performance targets (pragmatic): dashboard queries p95 <5s, vector ops p95 <2s, MV refresh <30min. Prefer materialized views for heavy aggregations.
 
 ### AI/Agents Framework
 
-**Default Models**: Llama 3.2 8B Instruct (q4_K_M quantization)
-**Alternative Models**: Mistral 7B, Qwen2.5 7B  
-**Embeddings**: all-minilm or nomic-embed
+**Baseline Local Models**: Prefer 7–13B instruct class (e.g., Llama 3.2 8B Instruct q4_K_M). Model is swappable via config; avoid hardcoding.
+**Alternatives**: Mistral 7B, Qwen2.5 7B
+**Embeddings**: all-minilm or nomic-embed (configurable)
 **Ollama Endpoints**: chat (/api/chat) and embeddings (/api/embed); JSON mode and structured outputs supported
 **PydanticAI**: structured, type-safe tools and outputs; dependency injection; streaming; optional durable execution
 **LangChain + LangGraph**: lightweight chains and graph control for step-wise flows (fetch → summarize → compare → draft)
@@ -114,6 +141,13 @@ uv pin Python 3.12; uv sync; streamlit run. Validate critical config at startup;
 
 Deterministic drafting for exports: temp ~0.2, fixed seed, JSON mode for schemas. Context discipline; change-hash gated re-embedding. Tool schemas mirrored between PydanticAI/LangChain and MCP servers. Reproducible artifacts with explicit model versions and parameters.
 
+Simplicity & Anti-Overfitting Guardrails:
+
+- Prefer simple prompts and few-shot patterns before complex agent graphs.
+- Ship minimal viable tools; add new tools only if they unlock a use case measured by users.
+- Avoid training on narrow agency/vendor idiosyncrasies; enforce stratified sampling across time, agencies, values.
+- Keep evaluation tasks representative of real workflows (classification, mapping, validation) vs. synthetic trivia.
+
 ### Code Quality
 
 Type hints required for all functions. Structured logging with standardized format. Error handling with user-friendly messages and technical logging. Unit tests for core business logic.
@@ -143,11 +177,29 @@ Type hints required for all functions. Structured logging with standardized form
 - Shipley methodology compliance verified through structured reviews
 - Export formats compatible with standard federal proposal development workflows
 
+## Training Reference Standards
+
+### Authoritative Sources for LLM Fine-Tuning
+
+**USASpending API References**: All dataset generation and fine-tuning must use official USASpending glossary and data dictionary definitions for field names, terminology, and relationships. Cache locally in `data/reference/usaspending/` with date-stamped filenames.
+
+**Shipley-Aligned Training Reference**: Mandatory use of `SHIPLEY_LLM_CURATED_REFERENCE.md` for capture and proposal methodology training. This curated reference provides paraphrased Shipley principles without copyright violations.
+
+**Terminology Consistency**: LLM training examples must align with USASpending field definitions (e.g., "base_and_all_options_value" vs. "total_obligation") and Shipley capture terminology (e.g., "discriminators" vs. "differentiators").
+
+### Training Data Requirements
+
+**Seed Examples**: Use structured JSONL format with system/user/assistant message patterns. Include contract classification, competitive analysis, evaluation criteria mapping, risk assessment, and pricing justification examples.
+
+**Business Rules Integration**: Training examples must reflect actual database constraints, contract types, set-aside categories, and competitive dynamics from USASpending data patterns.
+
+**Reference Validation**: All training content must be traceable to authoritative sources with explicit citations and version control for reference materials.
+
 ## Governance
 
 ### Constitution Authority
 
-This constitution supersedes all other development practices and technical decisions. All features, APIs, and integrations must align with stated principles. Complexity must be justified against core requirements.
+This constitution supersedes all other development practices and technical decisions. All features, APIs, and integrations must align with stated principles. Complexity must be explicitly justified against core requirements and user impact. Prefer config toggles/feature flags over hard wiring choices.
 
 ### Amendment Process
 
@@ -164,6 +216,6 @@ All development work must verify compliance with:
 
 ### Quality Gates
 
-Regular reviews ensure adherence to constitution principles. Any deviation requires explicit documentation and remediation timeline. Use structured logging and metrics to validate ongoing compliance.
+Regular reviews ensure adherence to constitution principles. Any deviation requires explicit documentation and remediation timeline. Use structured logging and metrics to validate ongoing compliance. Track advanced features under flags with clear exit criteria to graduate to core.
 
 **Version**: 1.0.0 | **Ratified**: 2025-09-23 | **Last Amended**: 2025-09-23
