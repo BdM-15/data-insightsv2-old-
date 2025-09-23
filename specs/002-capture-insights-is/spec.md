@@ -70,6 +70,8 @@ As a capture manager, I want a fast, private workstation that lets me filter the
 3. Given a capability baseline exists, When the user opens "Compare," Then the system presents a gap/fit view comparing baseline capabilities to requirements and incumbent patterns.
 4. Given filtered context and comparison are ready, When the user clicks "Generate Themes," Then the system produces draft win themes and narrative blocks with explicit references to data points.
 5. Given a session is complete, When the user selects "Export Capture Profile," Then the system exports a Markdown report that includes sources, filters used, and generated narrative.
+6. Given the user wants to preserve their work, When the user selects "Export Session Snapshot," Then the system saves a single local file capturing filters, horizon preset, selected entities, stance revision hash, and generation metadata.
+7. Given a capability baseline file exists, When the user selects "Import Baseline" and provides a valid CSV, Then the system loads capability tags and classes, flags any invalid rows, and updates the baseline for comparison.
 
 ### Edge Cases
 
@@ -93,12 +95,12 @@ As a capture manager, I want a fast, private workstation that lets me filter the
 - **FR-009**: System MUST provide clear empty-state guidance when filters return no results.
 - **FR-010**: System MUST keep the experience lean: minimize screens, consolidate insights, and reduce cognitive load.
 
-Unclear/assumptions to confirm:
+Clarified items (from PRD assumptions):
 
-- **FR-011**: System MUST define default freshness thresholds for processed award data [NEEDS CLARIFICATION: what threshold—for example 24h/72h/weekly?]
-- **FR-012**: System MUST define the time horizon presets for expiring/recompetes [NEEDS CLARIFICATION: exact preset ranges and defaults?]
-- **FR-013**: System SHOULD support saving and reloading capture sessions [NEEDS CLARIFICATION: is session save/load in scope for this feature?]
-- **FR-014**: System SHOULD support importing a capability baseline from a file [NEEDS CLARIFICATION: expected format and fields?]
+- **FR-011**: System MUST warn when processed awards/subawards data are older than 7 days (default freshness threshold) and show the last refresh timestamp prominently.
+- **FR-012**: System MUST offer expiring/recompete horizon presets of 0–6, 6–12, and 12–24 months, with a default selection of 6–24 months and an option for a custom range.
+- **FR-013**: System MUST support exporting a local Session Snapshot file (.json) containing filters, active horizon preset or custom range, selected entities (e.g., target agency/NAICS), stance revision hash, and generation metadata; System SHOULD support loading a previously exported snapshot (reload may be deferred to a later iteration).
+- **FR-014**: System SHOULD support importing a capability baseline from a local CSV file. Minimum CSV columns: `tag`, `class` (one of core|differentiator|emerging), `evidence_award_ids` (semicolon-separated optional), `notes` (optional). YAML import may be added later.
 
 ### Key Entities (include if feature involves data)
 
@@ -106,6 +108,7 @@ Unclear/assumptions to confirm:
 - **Signals**: Derived metrics for the market slice (attributes: obligations over time, top recipients, competition levels, expiring contracts).
 - **Capability Baseline**: Company capabilities and evidence (attributes: domains, past performance references, certifications, labor categories).
 - **Capture Profile**: Exportable narrative output (attributes: applied filters, referenced sources, win themes, recommendations, timestamp).
+- **Session Snapshot**: A portable file representing the current working context (attributes: filters, horizon preset/custom range, selected entities, stance revision hash, generation metadata, export timestamp).
 
 ---
 
@@ -120,7 +123,7 @@ Unclear/assumptions to confirm:
 
 ### Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Scope is clearly bounded
@@ -136,4 +139,4 @@ Unclear/assumptions to confirm:
 - [x] User scenarios defined
 - [x] Requirements generated
 - [x] Entities identified
-- [ ] Review checklist passed
+- [x] Review checklist passed
