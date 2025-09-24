@@ -5,6 +5,20 @@
 **Status**: Draft  
 **Input**: User description: "Capture Insights is a local, private tool that helps you move quickly from raw federal contract data to clear decisions about whether and how to pursue an opportunity. It pulls processed historical award data (prime and subaward) into simple dashboards, lets you explore competitors and upcoming recompetes, builds and maintains a reusable baseline of your company capabilities, and uses local AI to draft win themes and narrative blocks. Everything runs on your own machine. No outside AI services. No hidden network calls. The heart of the product is the 'capture loop' which is Pick and filter a slice of the market, See core spend, timing, and competitor signals fast, Spot expiring or likely-to-recompete contracts, Compare your capability baseline to requirements, incumbents, and other competitors, Generate data‑backed win themes and action ideas, Export a clean Markdown capture profile with sources. The product stays lean on purpose: fewer screens, faster answers, lower mental load. Problem Statement, Early capture work today usually means jumping between spreadsheets, clunky downloads, and manual notes. That wastes time, buries context, and makes it hard to repeat what worked. Data is often too summarized to be useful or too raw to be quick. There is no simple, private workstation tool that: (a) shows the right market and competitor slices fast, (b) keeps a living baseline of what your company can actually do, and (c) helps draft trustworthy narrative content with clear source references."
 
+## Clarifications
+
+### Session
+
+- Data freshness: Default warning threshold = 7 days; show last refresh timestamp prominently (derived from PRD “Fast Feels Better” and local, on-demand refresh posture).
+- Expiring/recompete horizons: Presets = 0–6, 6–12, 12–24 months; default = 6–24 months; allow custom range.
+- Session persistence: MUST support exporting a local JSON Session Snapshot (filters, horizon, selected entities, stance revision hash, generation metadata). SHOULD support loading a prior snapshot (can be deferred).
+- Baseline import: SHOULD support CSV import with columns: tag, class (core|differentiator|emerging), evidence_award_ids (optional; semicolon-delimited), notes (optional). YAML import may follow.
+
+### Data Source
+
+- [NEEDS CLARIFICATION] Cleansed USASpending data source location (PostgreSQL connection/DSN, database, schema, and table/view names) will be provided by a separate ETL/cleansing project. This project does not perform cleansing.
+- Assumption: Read-only access to provided schema/views; app maps them to logical names (prime_awards, subawards_enriched, mv_expiring_contracts) via configuration.
+
 ## Execution Flow (main)
 
 ```
@@ -101,6 +115,7 @@ Clarified items (from PRD assumptions):
 - **FR-012**: System MUST offer expiring/recompete horizon presets of 0–6, 6–12, and 12–24 months, with a default selection of 6–24 months and an option for a custom range.
 - **FR-013**: System MUST support exporting a local Session Snapshot file (.json) containing filters, active horizon preset or custom range, selected entities (e.g., target agency/NAICS), stance revision hash, and generation metadata; System SHOULD support loading a previously exported snapshot (reload may be deferred to a later iteration).
 - **FR-014**: System SHOULD support importing a capability baseline from a local CSV file. Minimum CSV columns: `tag`, `class` (one of core|differentiator|emerging), `evidence_award_ids` (semicolon-separated optional), `notes` (optional). YAML import may be added later.
+- **FR-015**: System MUST allow configuration of an external, cleansed data source (PostgreSQL) including connection parameters and logical view/table names for prime awards, subawards, and expiring contracts. System WILL NOT perform data cleansing or ETL.
 
 ### Key Entities (include if feature involves data)
 
@@ -123,7 +138,7 @@ Clarified items (from PRD assumptions):
 
 ### Requirement Completeness
 
-- [x] No [NEEDS CLARIFICATION] markers remain
+- [ ] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Scope is clearly bounded

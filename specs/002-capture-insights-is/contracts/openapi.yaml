@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: Capture Insights Core API
+  version: 0.1.0
+paths:
+  /signals:
+    get:
+      summary: Get core signals for a market slice
+      parameters:
+        - in: query
+          name: filters
+          required: true
+          schema:
+            type: string
+          description: JSON-encoded filters (agency, naics_psc, set_aside, date_range, vehicle)
+      responses:
+        "200":
+          description: Signals returned
+        "400":
+          description: Invalid filters
+  /expiring:
+    get:
+      summary: Get expiring or likely-to-recompete contracts
+      parameters:
+        - in: query
+          name: horizon
+          schema:
+            type: string
+            enum: ["0-6", "6-12", "12-24", "custom"]
+          required: true
+        - in: query
+          name: custom
+          schema:
+            type: string
+          description: JSON with {start,end} when horizon=custom
+      responses:
+        "200":
+          description: Expiring list
+        "400":
+          description: Invalid horizon
+  /compare:
+    post:
+      summary: Compare capability baseline to requirements/incumbents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                baseline:
+                  type: array
+                  items:
+                    type: object
+                context:
+                  type: object
+      responses:
+        "200":
+          description: Comparison results
+        "400":
+          description: Invalid baseline or context
+  /themes:
+    post:
+      summary: Generate data-backed win themes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                signals:
+                  type: object
+                comparison:
+                  type: object
+      responses:
+        "200":
+          description: Generated themes
+        "400":
+          description: Invalid inputs
+  /export/profile:
+    post:
+      summary: Export capture profile markdown
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                profile:
+                  type: object
+      responses:
+        "200":
+          description: Markdown content
+        "400":
+          description: Invalid profile
+  /export/session:
+    post:
+      summary: Export session snapshot JSON
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                snapshot:
+                  type: object
+      responses:
+        "200":
+          description: Session snapshot file path
+        "400":
+          description: Invalid snapshot
