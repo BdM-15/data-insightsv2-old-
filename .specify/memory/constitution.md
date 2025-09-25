@@ -63,6 +63,8 @@ Baseline logical tables (map via views/aliases to your schema):
 
 Note: If using existing schemas (e.g., `s3_processed.usaspending_prime_awards_dedup`), provide SQL views to expose the above logical names to the app to avoid hard coupling to one warehouse layout.
 
+Scope Clarification: This project does not perform data cleansing/ETL for USASpending. A separate project provides cleansed, ready-to-query tables/views in PostgreSQL. This app must be configurable to point at that external location (connection/DSN, database, schema, view/table names) and treat it as read-only.
+
 Performance targets (pragmatic): dashboard queries p95 <5s, vector ops p95 <2s, MV refresh <30min. Prefer materialized views for heavy aggregations.
 
 ### AI/Agents Framework
